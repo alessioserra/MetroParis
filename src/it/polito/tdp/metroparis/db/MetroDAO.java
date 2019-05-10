@@ -26,7 +26,7 @@ public class MetroDAO {
 			ResultSet rs = st.executeQuery();
 
 			while (rs.next()) {
-				Fermata f = new Fermata(rs.getInt("id_Fermata"), rs.getString("nome"),
+				Fermata f = new Fermata(rs.getInt("id_fermata"), rs.getString("nome"),
 						new LatLng(rs.getDouble("coordx"), rs.getDouble("coordy")));
 				fermate.add(f);
 			}
