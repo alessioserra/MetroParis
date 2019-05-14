@@ -115,7 +115,7 @@ public class Model {
 		
 		//Creo iteratore e lo associo al grafo       
 		//GraphIterator<Fermata, DefaultEdge> it = new BreadthFirstIterator<>(this.grafo,source); //in ampiezza
-		GraphIterator<Fermata, DefaultEdge> it = new DepthFirstIterator<>(this.grafo,source); //in profondita'
+		GraphIterator<Fermata, DefaultWeightedEdge> it = new DepthFirstIterator<>(this.grafo,source); //in profondita'
 		
 		it.addTraversalListener(new EdgeTraversedListener(backVisit, grafo)); //Questa classe potrebbe essere definita anche dentro la classe Model
 		//A fine iterazione mi ritroverò la mappa back riempita

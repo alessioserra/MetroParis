@@ -8,14 +8,15 @@ import org.jgrapht.event.EdgeTraversalEvent;
 import org.jgrapht.event.TraversalListener;
 import org.jgrapht.event.VertexTraversalEvent;
 import org.jgrapht.graph.DefaultEdge;
+import org.jgrapht.graph.DefaultWeightedEdge;
 
 //Classe per intercettare gli eventi del grafo quando è scandito da un iteratore (LISTENER)
-public class EdgeTraversedListener implements TraversalListener<Fermata, DefaultEdge> {
+public class EdgeTraversedListener implements TraversalListener<Fermata, DefaultWeightedEdge> {
 
-	Graph<Fermata, DefaultEdge> grafo;
+	Graph<Fermata, DefaultWeightedEdge> grafo;
 	Map<Fermata,Fermata> back;
 	
-	public EdgeTraversedListener(Map<Fermata, Fermata> back,Graph<Fermata, DefaultEdge> grafo) {
+	public EdgeTraversedListener(Map<Fermata, Fermata> back,Graph<Fermata, DefaultWeightedEdge> grafo) {
 		super();
 		this.back = back;
 		this.grafo=grafo;
@@ -29,8 +30,7 @@ public class EdgeTraversedListener implements TraversalListener<Fermata, Default
 	public void connectedComponentStarted(ConnectedComponentTraversalEvent arg0) {		
 	}
 
-	@Override
-	public void edgeTraversed(EdgeTraversalEvent<DefaultEdge> ev) {	
+	public void edgeTraversed(EdgeTraversalEvent<DefaultWeightedEdge> ev) {	
  		 
 		/*Back codifica le relazioni si tipo CHILD -> PARENT
 		 * 
