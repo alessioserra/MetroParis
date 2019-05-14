@@ -5,11 +5,14 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
 import com.javadocmd.simplelatlng.LatLng;
 
+import it.polito.tdp.metroparis.model.Connessione;
+import it.polito.tdp.metroparis.model.ConnessioneVelocita;
 import it.polito.tdp.metroparis.model.Fermata;
 import it.polito.tdp.metroparis.model.Linea;
 
@@ -41,7 +44,7 @@ public class MetroDAO {
 
 		return fermate;
 	}
-
+	
 	public List<Linea> getAllLinee() {
 		final String sql = "SELECT id_linea, nome, velocita, intervallo FROM linea ORDER BY nome ASC";
 
@@ -125,6 +128,34 @@ public class MetroDAO {
 			
 			while(rs.next()) { //sfrutto l'hashcode creando un oggetto effimero
 				result.add(idMap.get( rs.getInt("id_stazA")));	
+			}
+
+			conn.close();
+			return result;
+
+		} catch (SQLException e) {
+			e.printStackTrace();
+			throw new RuntimeException("Errore",e);
+		}
+	}
+	
+	public List<ConnessioneVelocita> getConnessioniVelocita(){
+		
+		final String sql = "SELECT connessione.id_stazP, connessione.id_stazA, MAX(linea.velocita) AS velocita FROM connessione, linea WHERE connessione.id_linea=linea.id_linea GROUP BY connessione.id_stazP, connessione.id_stazA";
+
+		try {
+			Connection conn = DBConnect.getConnection();
+			PreparedStatement st = conn.prepareStatement(sql);
+			
+			//Eseguo query
+			ResultSet rs = st.executeQuery();
+
+			//Creo la lista da riempire e poi restituire
+			List<ConnessioneVelocita> result = new ArrayList<ConnessioneVelocita>();
+			
+			while(rs.next()) { 
+				ConnessioneVelocita item = new ConnessioneVelocita(rs.getInt("id_stazP"), rs.getInt("id_stazA"), rs.getDouble("velocita"));
+				result.add(item);
 			}
 
 			conn.close();

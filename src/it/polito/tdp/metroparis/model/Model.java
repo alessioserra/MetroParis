@@ -4,27 +4,33 @@ import java.util.*;
 
 import org.jgrapht.*;
 import org.jgrapht.Graphs;
+import org.jgrapht.alg.shortestpath.DijkstraShortestPath;
 import org.jgrapht.graph.DefaultEdge;
+import org.jgrapht.graph.DefaultWeightedEdge;
 import org.jgrapht.graph.SimpleDirectedGraph;
+import org.jgrapht.graph.SimpleDirectedWeightedGraph;
 import org.jgrapht.traverse.BreadthFirstIterator;
 import org.jgrapht.traverse.DepthFirstIterator;
 import org.jgrapht.traverse.GraphIterator;
+
+import com.javadocmd.simplelatlng.LatLngTool;
+import com.javadocmd.simplelatlng.util.LengthUnit;
 
 import it.polito.tdp.metroparis.db.MetroDAO;
 
 public class Model {
 	
 	//Dichiaro solamente variabili, le CREO(new) dopo
-	private Graph<Fermata,DefaultEdge> grafo;
+	private Graph<Fermata,DefaultWeightedEdge> grafo;
 	private List<Fermata> fermate;
 	private Map<Integer,Fermata> fermateIdMap;
 	Map<Fermata,Fermata> backVisit;
 	
 	//GETTERS and SETTERS
-	public Graph<Fermata, DefaultEdge> getGrafo() {
+	public Graph<Fermata, DefaultWeightedEdge> getGrafo() {
 		return grafo;
 	}
-	public void setGrafo(Graph<Fermata, DefaultEdge> grafo) {
+	public void setGrafo(Graph<Fermata, DefaultWeightedEdge> grafo) {
 		this.grafo = grafo;
 	}
 	public List<Fermata> getFermate() {
@@ -38,11 +44,11 @@ public class Model {
 	 */
 	public void creaGrafo() {
 		
-		//Creo l'oggetto GRAFO
-		this.grafo = new SimpleDirectedGraph<>(DefaultEdge.class);
+		//Creo l'oggetto GRAFO PESATO
+		this.grafo = new SimpleDirectedWeightedGraph<>(DefaultWeightedEdge.class);
 		
 		//Devo aggiungere i VERTICI
-		MetroDAO dao = new MetroDAO(); //interrodo DB per ottenere tutte le fermate
+		MetroDAO dao = new MetroDAO(); //interrogo DB per ottenere tutte le fermate
 		this.fermate= dao.getAllFermate();
 		Graphs.addAllVertices(this.grafo, this.fermate);
 		
@@ -72,10 +78,33 @@ public class Model {
 				this.grafo.addEdge(partenza, arrivo); 
 		}
 		
-		//3° opzione
+		//NEW!!!
+		//Aggiungo archi pesati
+		List<ConnessioneVelocita> archiPesati = dao.getConnessioniVelocita();
+		
+		for (ConnessioneVelocita cp : archiPesati) {
+			
+			Fermata partenza = fermateIdMap.get(cp.getStazP());
+			Fermata arrivo = fermateIdMap.get(cp.getStazA());
+			
+			//Calcolo il tempo per raggiungere la stazione
+			double distanza = LatLngTool.distance(partenza.getCoords(), arrivo.getCoords(), LengthUnit.KILOMETER);
+			double peso = distanza/cp.getVelocita() * 3600; //Calcolo tempo in secondi;
+			
+			grafo.setEdgeWeight(partenza, arrivo, peso);
+		}
 		
 		
 		System.out.println("Grafo creato\n#Vertici: "+grafo.vertexSet().size()+"\n#Archi: "+grafo.edgeSet().size());
+	}
+	
+	public List<Fermata> trovaCamminoMinimo(Fermata partenza, Fermata arrivo){
+		
+		DijkstraShortestPath<Fermata, DefaultWeightedEdge> dijkstra = new DijkstraShortestPath<>(this.grafo);
+		GraphPath<Fermata, DefaultWeightedEdge> path = dijkstra.getPath(partenza, arrivo);
+		
+		return path.getVertexList();	
+		
 	}
 
 	//Iterazione con la quale attraversiamo il grafo e ci aggiungiamo via via i vertici che troviamo (N.B. NON E' UN CAMMINO!)
@@ -88,7 +117,7 @@ public class Model {
 		//GraphIterator<Fermata, DefaultEdge> it = new BreadthFirstIterator<>(this.grafo,source); //in ampiezza
 		GraphIterator<Fermata, DefaultEdge> it = new DepthFirstIterator<>(this.grafo,source); //in profondita'
 		
-		it.addTraversalListener(new EdgeTraversedListener(backVisit, grafo));
+		it.addTraversalListener(new EdgeTraversedListener(backVisit, grafo)); //Questa classe potrebbe essere definita anche dentro la classe Model
 		//A fine iterazione mi ritroverò la mappa back riempita
 		
 		//Devo popolare la mappa almeno col nodo sorgente
@@ -116,8 +145,8 @@ public class Model {
 		result.add(0, f); //Aggiungo sempre in prima posizione
 		f = backVisit.get(f);
 		}
+		
 		//In questo modo si ripercorre indietro l'albero costruendo la lista
-
 		return result;
 	}
 	
